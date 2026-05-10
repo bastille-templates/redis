@@ -1,0 +1,24 @@
+CONFIG set allow.sysvipc=1
+CONFIG set allow.raw_sockets=1
+
+RESTART
+
+ARG RVERSION=84
+ARG RDB="appdb"
+ARG RUSER="appuser"
+ARG RPORT="6379"
+ARG MEM_LIMIT="1G"
+
+# install required packages
+PKG redis${RVERSION} 
+
+# copy files
+# CP usr /
+
+# enable and start redis
+SYSRC redis_enable=YES
+SERVICE redis start
+
+RDR tcp ${RPORT} 6379
+
+TAGS database redis${RVERSION}
