@@ -1,8 +1,3 @@
-CONFIG set allow.sysvipc=1
-CONFIG set allow.raw_sockets=1
-
-RESTART
-
 ARG RVERSION=84
 ARG RDB="appdb"
 ARG RUSER="appuser"
@@ -13,7 +8,7 @@ ARG MEM_LIMIT="1G"
 PKG redis${RVERSION} 
 
 # copy files
-# CP usr /
+CP usr /
 
 # enable and start redis
 SYSRC redis_enable=YES
