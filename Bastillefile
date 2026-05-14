@@ -1,19 +1,24 @@
-ARG RVERSION=84
-ARG RDB="appdb"
-ARG RUSER="appuser"
-ARG RPORT="6379"
-ARG MEM_LIMIT="1G"
+ARG REDIS_VERSION=84
+ARG REDIS_PORT=6379
+ARG REDIS_MAXMEM=256mb
+ARG REDIS_MAXPOL=allkeys-lru
+ARG REDIS_REQUIREPASS=
 
 # install required packages
-PKG redis${RVERSION} 
+PKG redis${REDIS_VERSION} 
 
 # copy files
 CP usr /
 
+RENDER /usr/local/etc/redis.conf
+
 # enable and start redis
 SYSRC redis_enable=YES
+SYSRC redis_profiles=default
+SYSRC redis_default_configfile=/usr/local/etc/redis.conf
+
 SERVICE redis start
 
-RDR tcp ${RPORT} 6379
+RDR tcp ${REDIS_PORT} 6379
 
-TAGS database redis${RVERSION}
+TAGS database redis${REDIS_VERSION}
