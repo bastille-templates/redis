@@ -14,7 +14,6 @@ RENDER /usr/local/etc/redis.conf
 
 # enable and start redis
 SYSRC redis_enable=YES
-SYSRC redis_profiles=default
 SYSRC redis_default_configfile=/usr/local/etc/redis.conf
 
 SERVICE redis start
