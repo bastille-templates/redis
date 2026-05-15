@@ -85,7 +85,7 @@
 # You will also need to set a password unless you explicitly disable protected
 # mode.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-bind 127.0.0.1 -::1
+bind ${JAIL_IP} 127.0.0.1
 
 # By default, outgoing connections (from replica to master, from Sentinel to
 # instances, cluster bus, etc.) are not bound to a specific local address. In
@@ -110,6 +110,7 @@ bind 127.0.0.1 -::1
 # you are sure you want clients from other hosts to connect to Redis
 # even if no authentication is configured.
 protected-mode yes
+# requirepass ${REDIS_REQUIREPASS}
 
 # Redis uses default hardened security configuration directives to reduce the
 # attack surface on innocent users. Therefore, several sensitive configuration
@@ -136,7 +137,7 @@ protected-mode yes
 
 # Accept connections on the specified port, default is 6379 (IANA #815344).
 # If port 0 is specified Redis will not listen on a TCP socket.
-port 6379
+port ${REDIS_PORT}
 
 # TCP listen() backlog.
 #
@@ -443,6 +444,10 @@ locale-collate ""
 # You can set these explicitly by uncommenting the following line.
 #
 # save 3600 1 300 100 60 10000
+save 900 1
+save 900 1
+save 300 10
+save 60 10000
 
 # By default Redis will stop accepting writes if RDB snapshots are enabled
 # (at least one save point) and the latest background save failed.
@@ -1149,6 +1154,7 @@ acllog-max-len 128
 # output buffers (but this is not needed if the policy is 'noeviction').
 #
 # maxmemory <bytes>
+maxmemory ${REDIS_MAXMEM}
 
 # MAXMEMORY POLICY: how Redis will select what to remove when maxmemory
 # is reached. You can select one from the following behaviors:
@@ -1178,6 +1184,7 @@ acllog-max-len 128
 # The default is:
 #
 # maxmemory-policy noeviction
+maxmemory-policy ${REDIS_MAXPOL}
 
 # LRU, LFU and minimal TTL algorithms are not precise algorithms but approximated
 # algorithms (in order to save memory), so you can tune it for speed or
@@ -1280,9 +1287,9 @@ acllog-max-len 128
 # in order to instead release memory in a non-blocking way like if UNLINK
 # was called, using the following configuration directives.
 
-lazyfree-lazy-eviction no
-lazyfree-lazy-expire no
-lazyfree-lazy-server-del no
+lazyfree-lazy-eviction yes
+lazyfree-lazy-expire yes
+lazyfree-lazy-server-del yes
 replica-lazy-flush no
 
 # It is also possible, for the case when to replace the user code DEL calls
