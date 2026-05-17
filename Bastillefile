@@ -14,10 +14,9 @@ RENDER /usr/local/etc/redis.conf
 
 # enable and start redis
 SYSRC redis_enable=YES
-SYSRC redis_default_configfile=/usr/local/etc/redis.conf
 
 SERVICE redis start
 
-RDR tcp ${REDIS_PORT} 6379
+#RDR tcp ${REDIS_PORT} 6379
 
 TAGS database redis${REDIS_VERSION}
