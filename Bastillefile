@@ -4,6 +4,9 @@ ARG REDIS_MAXMEM=1gb
 ARG REDIS_MAXPOL=allkeys-lru
 ARG REDIS_REQUIREPASS=changeme!
 
+# install required templates
+INCLUDE https://github.com/bastille-templates/openssl
+
 # install required packages
 PKG redis${REDIS_VERSION} 
 
