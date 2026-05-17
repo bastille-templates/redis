@@ -85,7 +85,7 @@
 # You will also need to set a password unless you explicitly disable protected
 # mode.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-bind ${JAIL_IP} 127.0.0.1
+bind ${JAIL_IP} 127.0.0.1 -::1
 
 # By default, outgoing connections (from replica to master, from Sentinel to
 # instances, cluster bus, etc.) are not bound to a specific local address. In
@@ -110,7 +110,6 @@ bind ${JAIL_IP} 127.0.0.1
 # you are sure you want clients from other hosts to connect to Redis
 # even if no authentication is configured.
 protected-mode yes
-# requirepass ${REDIS_REQUIREPASS}
 
 # Redis uses default hardened security configuration directives to reduce the
 # attack surface on innocent users. Therefore, several sensitive configuration
@@ -435,6 +434,9 @@ locale-collate ""
 # as in following example:
 #
 # save ""
+save 900 1
+save 300 10
+save 60 10000
 #
 # Unless specified otherwise, by default Redis will save the DB:
 #   * After 3600 seconds (an hour) if at least 1 change was performed
@@ -444,10 +446,6 @@ locale-collate ""
 # You can set these explicitly by uncommenting the following line.
 #
 # save 3600 1 300 100 60 10000
-save 900 1
-save 900 1
-save 300 10
-save 60 10000
 
 # By default Redis will stop accepting writes if RDB snapshots are enabled
 # (at least one save point) and the latest background save failed.
@@ -673,7 +671,7 @@ repl-diskless-sync-max-replicas 0
 repl-diskless-load disabled
 
 # Master send PINGs to its replicas in a predefined interval. It's possible to
-# change this interval with the repl-ping-replica-period option. The default
+# change this interval with the repl_ping_replica_period option. The default
 # value is 10 seconds.
 #
 # repl-ping-replica-period 10
@@ -731,24 +729,6 @@ repl-disable-tcp-nodelay no
 # A value of 0 means to never release the backlog.
 #
 # repl-backlog-ttl 3600
-
-# During a fullsync, the master may decide to send both the RDB file and the
-# replication stream to the replica in parallel. This approach shifts the
-# responsibility of buffering the replication stream to the replica during the
-# fullsync process. The replica accumulates the replication stream data until
-# the RDB file is fully loaded. Once the RDB delivery is completed and
-# successfully loaded, the replica begins processing and applying the
-# accumulated replication data to the db. The configuration below controls how
-# much replication data the replica can accumulate during a fullsync.
-#
-# When the replica reaches this limit, it will stop accumulating further data.
-# At this point, additional data accumulation may occur on the master side
-# depending on the 'client-output-buffer-limit <replica>' config of master.
-#
-# A value of 0 means replica inherits hard limit of
-# 'client-output-buffer-limit <replica>' config to limit accumulation size.
-#
-# replica-full-sync-buffer-limit 0
 
 # The replica priority is an integer number published by Redis in the INFO
 # output. It is used by Redis Sentinel in order to select a replica to promote
@@ -861,7 +841,7 @@ replica-priority 100
 # this is used in order to send invalidation messages to clients. Please
 # check this page to understand more about the feature:
 #
-#   https://redis.io/docs/latest/develop/use/client-side-caching/
+#   https://redis.io/topics/client-side-caching
 #
 # When tracking is enabled for a client, all the read only queries are assumed
 # to be cached: this will force Redis to store information in the invalidation
@@ -1039,7 +1019,7 @@ replica-priority 100
 # * stream - Data type: streams related.
 #
 # For more information about ACL configuration please refer to
-# the Redis web site at https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/
+# the Redis web site at https://redis.io/topics/acl
 
 # ACL LOG
 #
@@ -1154,7 +1134,6 @@ acllog-max-len 128
 # output buffers (but this is not needed if the policy is 'noeviction').
 #
 # maxmemory <bytes>
-maxmemory ${REDIS_MAXMEM}
 
 # MAXMEMORY POLICY: how Redis will select what to remove when maxmemory
 # is reached. You can select one from the following behaviors:
@@ -1184,7 +1163,6 @@ maxmemory ${REDIS_MAXMEM}
 # The default is:
 #
 # maxmemory-policy noeviction
-maxmemory-policy ${REDIS_MAXPOL}
 
 # LRU, LFU and minimal TTL algorithms are not precise algorithms but approximated
 # algorithms (in order to save memory), so you can tune it for speed or
@@ -1287,9 +1265,9 @@ maxmemory-policy ${REDIS_MAXPOL}
 # in order to instead release memory in a non-blocking way like if UNLINK
 # was called, using the following configuration directives.
 
-lazyfree-lazy-eviction yes
-lazyfree-lazy-expire yes
-lazyfree-lazy-server-del yes
+lazyfree-lazy-eviction no
+lazyfree-lazy-expire no
+lazyfree-lazy-server-del no
 replica-lazy-flush no
 
 # It is also possible, for the case when to replace the user code DEL calls
@@ -1316,27 +1294,38 @@ lazyfree-lazy-user-flush no
 # in different I/O threads. Since especially writing is so slow, normally
 # Redis users use pipelining in order to speed up the Redis performances per
 # core, and spawn multiple instances in order to scale more. Using I/O
-# threads it is possible to easily speedup several times Redis without resorting
+# threads it is possible to easily speedup two times Redis without resorting
 # to pipelining nor sharding of the instance.
 #
 # By default threading is disabled, we suggest enabling it only in machines
 # that have at least 4 or more cores, leaving at least one spare core.
-# We also recommend using threaded I/O only if you actually have performance
-# problems, with Redis instances being able to use a quite big percentage of
-# CPU time, otherwise there is no point in using this feature.
+# Using more than 8 threads is unlikely to help much. We also recommend using
+# threaded I/O only if you actually have performance problems, with Redis
+# instances being able to use a quite big percentage of CPU time, otherwise
+# there is no point in using this feature.
 #
-# So for instance if you have a four cores boxes, try to use 3 I/O
-# threads, if you have a 8 cores, try to use 7 threads. In order to
+# So for instance if you have a four cores boxes, try to use 2 or 3 I/O
+# threads, if you have a 8 cores, try to use 6 threads. In order to
 # enable I/O threads use the following configuration directive:
 #
 # io-threads 4
 #
 # Setting io-threads to 1 will just use the main thread as usual.
-# When I/O threads are enabled, we not only use threads for writes, that
-# is to thread the write(2) syscall and transfer the client buffers to the
-# socket, but also use threads for reads and protocol parsing.
+# When I/O threads are enabled, we only use threads for writes, that is
+# to thread the write(2) syscall and transfer the client buffers to the
+# socket. However it is also possible to enable threading of reads and
+# protocol parsing using the following configuration directive, by setting
+# it to yes:
 #
-# NOTE: If you want to test the Redis speedup using redis-benchmark, make
+# io-threads-do-reads no
+#
+# Usually threading reads doesn't help much.
+#
+# NOTE 1: This configuration directive cannot be changed at runtime via
+# CONFIG SET. Also, this feature currently does not work when SSL is
+# enabled.
+#
+# NOTE 2: If you want to test the Redis speedup using redis-benchmark, make
 # sure you also run the benchmark itself in threaded mode, using the
 # --threads option to match the number of Redis threads, otherwise you'll not
 # be able to notice the improvements.
@@ -1376,7 +1365,7 @@ oom-score-adj-values 0 200 800
 #################### KERNEL transparent hugepage CONTROL ######################
 
 # Usually the kernel Transparent Huge Pages control is set to "madvise" or
-# "never" by default (/sys/kernel/mm/transparent_hugepage/enabled), in which
+# or "never" by default (/sys/kernel/mm/transparent_hugepage/enabled), in which
 # case this config has no effect. On systems in which it is set to "always",
 # redis will attempt to disable it specifically for the redis process in order
 # to avoid latency problems specifically with fork(2) and CoW.
@@ -1407,7 +1396,7 @@ disable-thp yes
 # restarting the server can lead to data loss. A conversion needs to be done
 # by setting it via CONFIG command on a live server first.
 #
-# Please check https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/ for more information.
+# Please check https://redis.io/topics/persistence for more information.
 
 appendonly no
 
@@ -1535,25 +1524,6 @@ auto-aof-rewrite-min-size 64mb
 # Redis will try to read more data from the AOF file but not enough bytes
 # will be found.
 aof-load-truncated yes
-
-# An AOF file may be found to be corrupted at the end during the Redis
-# startup process, when the AOF data gets loaded back into memory.
-# This may happen when the system where Redis is running crashes.
-#
-# The aof-load-corrupt-tail-max-size option allows Redis to automatically recover
-# from small amounts of corruption at the end of the AOF file by truncating the
-# corrupted portion and continuing with startup.
-#
-# Set this to the maximum number of bytes of corruption you're willing to
-# lose from the end of the AOF file. If the corrupted portion is larger than
-# this value, Redis will refuse to start and require manual intervention.
-#
-# Setting this to 0 (default) disables automatic recovery from corruption.
-# Redis will exit with an error and suggest using redis-check-aof --fix.
-#
-# Note: This is different from aof-load-truncated, which handles missing data
-# (unexpected EOF) rather than corrupted data (format errors).
-# aof-load-corrupt-tail-max-size 4096
 
 # Redis can create append-only base files in either RDB or AOF formats. Using
 # the RDB format is always faster and more efficient, and disabling it is only
@@ -1809,68 +1779,6 @@ aof-timestamp-enabled no
 #
 # cluster-preferred-endpoint-type ip
 
-# This configuration defines the sampling ratio (0-100) for checking command
-# compatibility in cluster mode. When a command is executed, it is sampled at
-# the specified ratio to determine if it complies with Redis cluster constraints,
-# such as cross-slot restrictions.
-#
-# - A value of 0 means no commands are sampled for compatibility checks.
-# - A value of 100 means all commands are checked.
-# - Intermediate values (e.g., 10) mean that approximately 10% of the commands
-#   are randomly selected for compatibility verification.
-#
-# Higher sampling ratios may introduce additional performance overhead, especially
-# under high QPS. The default value is 0 (no sampling).
-#
-# cluster-compatibility-sample-ratio 0
-
-# Clusters can be configured to track per-slot resource statistics,
-# which are accessible by the CLUSTER SLOT-STATS command.
-#
-# By default, the 'cluster-slot-stats-enabled' is disabled, and only 'key-count' is captured.
-# By enabling the 'cluster-slot-stats-enabled' config, the cluster will begin to capture advanced statistics.
-# These statistics can be leveraged to assess general slot usage trends, identify hot / cold slots,
-# migrate slots for a balanced cluster workload, and / or re-write application logic to better utilize slots.
-# Note that per slot **memory** statistics are collected only if 'cluster-slot-stats-enabled' is enabled
-# at startup, and later config changes don't affect it.
-#
-# cluster-slot-stats-enabled no
-
-# Slot migration write pause timeout controls how long the source node will
-# pause write operations during slot migration handoff phase. This usually
-# finishes in a few milliseconds, depending on traffic and load. When the source
-# node pauses writes to allow the destination to catch up and take the ownership
-# of the slots, this timeout prevents writes from being blocked indefinitely.
-#
-# If the destination node fails to complete the slot ownership takeover within
-# this timeout, the source node will resume accepting writes and assume the
-# migration task is failed. This prevents the source node from being permanently
-# blocked if the destination node becomes unresponsive or fails during migration.
-#
-# If this timeout is set too low, the source may resume writes and assume that
-# the slot migration has failed while the destination is still in the process of
-# draining the replication stream and publishing the configuration update.
-# During this window, writes accepted by the source will not be replicated to
-# the destination; if the destination later publishes the updated config and
-# takes ownership, those writes could be lost. Therefore, avoid setting this
-# timeout too low.
-#
-# This timeout is specified in milliseconds.
-#
-# cluster-slot-migration-write-pause-timeout 10000
-
-# This config controls the maximum acceptable lag in bytes between source and
-# destination nodes during slot migration before triggering the slot handoff
-# phase. If the remaining replication stream size falls below this threshold,
-# the source node pauses writes and then signals destination that it can take
-# over the slot ownership after draining the remaining replication stream.
-#
-# A smaller value means potentially shorter write pause duration, but it may
-# take longer for the destination to catch up. A larger value means handoff can
-# be triggered earlier, but the write pause may potentially be longer.
-#
-# cluster-slot-migration-handoff-max-lag-bytes 1mb
-
 # In order to setup your cluster make sure to read the documentation
 # available at https://redis.io web site.
 
@@ -1975,7 +1883,7 @@ latency-monitor-threshold 0
 ############################# EVENT NOTIFICATION ##############################
 
 # Redis can notify Pub/Sub clients about events happening in the key space.
-# This feature is documented at https://redis.io/docs/latest/develop/use/keyspace-notifications/
+# This feature is documented at https://redis.io/topics/notifications
 #
 # For instance if keyspace events notification is enabled, and a client
 # performs a DEL operation on key "foo" stored in the Database 0, two
@@ -2001,12 +1909,9 @@ latency-monitor-threshold 0
 #  t     Stream commands
 #  d     Module key type events
 #  m     Key-miss events (Note: It is not included in the 'A' class)
-#  o     Overwritten events generated every time a key is overwritten.
-#        (Note: not included in the 'A' class)
-#  c     Type-changed events generated every time a key's type changes
-#        (Note: not included in the 'A' class)
 #  A     Alias for g$lshzxetd, so that the "AKE" string means all the events
-#        except key-miss, new key, overwritten and type-changed.
+#        (Except key-miss events which are excluded from 'A' due to their
+#         unique nature).
 #
 #  The "notify-keyspace-events" takes as argument a string that is composed
 #  of zero or multiple characters. The empty string means that notifications
@@ -2182,9 +2087,6 @@ client-output-buffer-limit pubsub 32mb 8mb 60
 # needs, such as a command with huge argument, or huge multi/exec requests or alike.
 #
 # client-query-buffer-limit 1gb
-
-# Defines how many commands in each client pipeline to decode and prefetch
-# lookahead 16
 
 # In some scenarios client connections can hog up memory leading to OOM
 # errors or data eviction. To avoid this we can cap the accumulated memory
