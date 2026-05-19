@@ -1,0 +1,48 @@
+# ─── NETWORK ───────────────────────────────────────────────
+bind 127.0.0.1                    # Ganti dengan IP jail jika multi-jail
+port 6379
+tcp-backlog 511
+timeout 300
+tcp-keepalive 60
+protected-mode yes
+
+# ─── GENERAL ───────────────────────────────────────────────
+daemonize yes
+supervised no
+pidfile /var/run/redis/redis.pid
+loglevel notice
+logfile /var/log/redis/redis.log
+databases 16
+
+# ─── MEMORY ────────────────────────────────────────────────
+# Sesuaikan dengan RAM yang dialokasikan ke jail
+maxmemory 512mb                   # Contoh: 512MB
+maxmemory-policy allkeys-lru      # Untuk cache Odoo/session
+maxmemory-samples 10
+active-expire-enabled yes
+
+# ─── PERSISTENCE ───────────────────────────────────────────
+# Untuk Odoo session store — gunakan AOF saja, matikan RDB
+save ""                           # Matikan RDB snapshot
+appendonly yes
+appendfilename "appendonly.aof"
+appendfsync everysec              # Balance: performa vs keamanan
+no-appendfsync-on-rewrite yes
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+aof-rewrite-incremental-fsync yes
+
+# ─── PERFORMANCE ───────────────────────────────────────────
+hz 20                             # Tick rate (10-100, default 10)
+dynamic-hz yes
+aof-use-rdb-preamble yes
+lazyfree-lazy-eviction yes
+lazyfree-lazy-expire yes
+lazyfree-lazy-server-del yes
+replica-lazy-flush yes
+lua-time-limit 5000
+slowlog-log-slower-than 10000
+slowlog-max-len 128
+
+# ─── CONNECTION ────────────────────────────────────────────
+maxclients 1000
