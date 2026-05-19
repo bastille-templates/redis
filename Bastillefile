@@ -1,8 +1,24 @@
-ARG REDIS_VERSION=74
+# --- Variable ---
+ARG CPULIMIT=0,1
+ARG MEMLIMIT=512M
+ARG DISKLIMIT=2G
+
+ARG REDIS_VERSION=72
 ARG REDIS_PORT=6379
 ARG REDIS_MAXMEM=512mb
 ARG REDIS_MAXPOL=allkeys-lru
 ARG REDIS_REQUIREPASS=changeme!
+
+# --- Limit resource ---
+LIMITS cpu ${CPULIMIT}
+LIMITS memoryuse ${MEMLIMIT}
+LIMITS datasize 20G ${DISKLIMIT}
+
+# --- Config ---
+#CONFIG set enforce_statfs=1;
+#CONFIG set allow.mount.fdescfs;
+#CONFIG set allow.mount.procfs;
+#RESTART
 
 # install required templates
 INCLUDE https://github.com/bastille-templates/openssl
