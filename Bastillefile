@@ -15,10 +15,10 @@ LIMITS memoryuse ${MEMLIMIT}
 LIMITS datasize 20G ${DISKLIMIT}
 
 # --- Config ---
-#CONFIG set enforce_statfs=1;
-#CONFIG set allow.mount.fdescfs;
-#CONFIG set allow.mount.procfs;
-#RESTART
+CONFIG set enforce_statfs=1;
+CONFIG set allow.mount.fdescfs;
+CONFIG set allow.mount.procfs;
+RESTART
 
 # install required templates
 INCLUDE https://github.com/bastille-templates/openssl
