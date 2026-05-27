@@ -15,9 +15,9 @@ LIMITS memoryuse ${MEMLIMIT}
 LIMITS datasize 20G ${DISKLIMIT}
 
 # --- Config ---
-CONFIG set enforce_statfs=1;
-CONFIG set allow.mount.fdescfs;
-CONFIG set allow.mount.procfs;
+CONFIG set allow.sysvipc 1
+CONFIG set sysvshm new
+CONFIG set sysvsem new
 RESTART
 
 # install required templates
