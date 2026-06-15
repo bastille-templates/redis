@@ -36,6 +36,6 @@ SYSRC redis_enable=YES
 
 SERVICE redis start
 
-#RDR tcp ${REDIS_PORT} 6379
+RDR tcp ${REDIS_PORT} 6379
 
 TAGS database redis${REDIS_VERSION}
