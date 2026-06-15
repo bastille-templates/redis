@@ -12,7 +12,7 @@ ARG REDIS_REQUIREPASS=changeme!
 # --- Limit resource ---
 LIMITS cpu ${CPULIMIT}
 LIMITS memoryuse ${MEMLIMIT}
-LIMITS datasize 20G ${DISKLIMIT}
+LIMITS datasize ${DISKLIMIT}
 
 # --- Config ---
 CONFIG set allow.sysvipc 1
