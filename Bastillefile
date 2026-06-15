@@ -21,7 +21,7 @@ CONFIG set sysvsem new
 RESTART
 
 # install required templates
-INCLUDE https://github.com/bastille-templates/openssl
+#INCLUDE https://github.com/bastille-templates/openssl
 
 # install required packages
 PKG redis${REDIS_VERSION} 
